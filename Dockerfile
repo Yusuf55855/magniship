@@ -1,11 +1,15 @@
-FROM openjdk:17-jdk-alpine
-# Menggunakan image dasar Java 17
+FROM maven:3.9.6-eclipse-temurin-21 AS build
+# Menggunakan Maven + OpenJDK 21 terbaru
 
-ARG JAR_FILE=target/*.jar
-# Mendefinisikan variable untuk lokasi JAR hasil build
+WORKDIR /app
+COPY . .
+WORKDIR /app/backend
+RUN mvn package -DskipTests
+# Build project pakai JDK 21
 
-COPY ${JAR_FILE} app.jar
-# Copy file JAR ke dalam image
+FROM eclipse-temurin:21-jdk-jammy
+# Menggunakan JDK 21 untuk menjalankan aplikasi
 
-ENTRYPOINT ["java", "-jar", "/app.jar"]
-# Menjalankan aplikasi Spring Boot
+WORKDIR /app
+COPY --from=build /app/backend/target/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
